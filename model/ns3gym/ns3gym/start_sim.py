@@ -15,6 +15,10 @@ def find_waf_path(cwd):
                 found = True
                 wafPath = os.path.join(myDir, fname)
                 break
+            elif fname == "ns-3-dev":
+                found = True
+                wafPath = os.path.join(myDir, fname, "waf")
+                break
         myDir = os.path.dirname(myDir)
         if str(myDir) == "/":  # root folder
             print("Waf file not found. Quitting...")
