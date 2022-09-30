@@ -7,7 +7,6 @@ import subprocess
 
 def find_waf_path(cwd):
     wafPath = cwd
-
     found = False
     myDir = cwd
     while (not found):
@@ -16,9 +15,10 @@ def find_waf_path(cwd):
                 found = True
                 wafPath = os.path.join(myDir, fname)
                 break
-
         myDir = os.path.dirname(myDir)
-
+        if str(myDir) == "/":  # root folder
+            print("Waf file not found. Quitting...")
+            sys.exit()
     return wafPath
 
 
