@@ -24,7 +24,8 @@ __email__ = "gawlowicz@tkn.tu-berlin.de"
 
 class Ns3ZmqBridge(object):
     """docstring for Ns3ZmqBridge"""
-    def __init__(self, port=0, startSim=True, simSeed=0, simArgs={}, debug=False):
+
+    def __init__(self, port=0, startSim=True, simSeed=0, simArgs={}, debug=False, src_dir=os.getcwd()):
         super(Ns3ZmqBridge, self).__init__()
         port = int(port)
         self.port = port
@@ -35,25 +36,26 @@ class Ns3ZmqBridge(object):
         self.simPid = None
         self.wafPid = None
         self.ns3Process = None
-
+        self.src_dir = src_dir
         context = zmq.Context()
         self.socket = context.socket(zmq.REP)
         try:
             if port == 0 and self.startSim:
-                port = self.socket.bind_to_random_port('tcp://*', min_port=5001, max_port=10000, max_tries=100)
+                port = self.socket.bind_to_random_port(
+                    'tcp://*', min_port=5001, max_port=10000, max_tries=100)
                 print("Got new port for ns3gm interface: ", port)
 
             elif port == 0 and not self.startSim:
-                print("Cannot use port %s to bind" % str(port) )
-                print("Please specify correct port" )
+                print("Cannot use port %s to bind" % str(port))
+                print("Please specify correct port")
                 sys.exit()
 
             else:
-                self.socket.bind ("tcp://*:%s" % str(port))
+                self.socket.bind("tcp://*:%s" % str(port))
 
         except Exception as e:
-            print("Cannot bind to tcp://*:%s as port is already in use" % str(port) )
-            print("Please specify different port or use 0 to get free port" )
+            print("Cannot bind to tcp://*:%s as port is already in use" % str(port))
+            print("Please specify different port or use 0 to get free port")
             sys.exit()
 
         if (startSim == True and simSeed == 0):
@@ -63,9 +65,11 @@ class Ns3ZmqBridge(object):
 
         if self.startSim:
             # run simulation script
-            self.ns3Process = start_sim_script(port, simSeed, simArgs, debug)
+            self.ns3Process = start_sim_script(
+                port, simSeed, simArgs, debug, src_dir)
         else:
-            print("Waiting for simulation script to connect on port: tcp://localhost:{}".format(port))
+            print(
+                "Waiting for simulation script to connect on port: tcp://localhost:{}".format(port))
             print('Please start proper ns-3 simulation script using ./waf --run "..."')
 
         self._action_space = None
@@ -360,13 +364,14 @@ class Ns3ZmqBridge(object):
 
 
 class Ns3Env(gym.Env):
-    def __init__(self, stepTime=0, port=0, startSim=True, simSeed=0, simArgs={}, debug=False):
+    def __init__(self, stepTime=0, port=0, startSim=True, simSeed=0, simArgs={}, debug=False, src_dir=os.getcwd()):
         self.stepTime = stepTime
         self.port = port
         self.startSim = startSim
         self.simSeed = simSeed
         self.simArgs = simArgs
         self.debug = debug
+        self.src_dir = src_dir
 
         # Filled in reset function
         self.ns3ZmqBridge = None
@@ -377,7 +382,8 @@ class Ns3Env(gym.Env):
         self.state = None
         self.steps_beyond_done = None
 
-        self.ns3ZmqBridge = Ns3ZmqBridge(self.port, self.startSim, self.simSeed, self.simArgs, self.debug)
+        self.ns3ZmqBridge = Ns3ZmqBridge(
+            self.port, self.startSim, self.simSeed, self.simArgs, self.debug, self.src_dir)
         self.ns3ZmqBridge.initialize_env(self.stepTime)
         self.action_space = self.ns3ZmqBridge.get_action_space()
         self.observation_space = self.ns3ZmqBridge.get_observation_space()
@@ -412,7 +418,8 @@ class Ns3Env(gym.Env):
             self.ns3ZmqBridge = None
 
         self.envDirty = False
-        self.ns3ZmqBridge = Ns3ZmqBridge(self.port, self.startSim, self.simSeed, self.simArgs, self.debug)
+        self.ns3ZmqBridge = Ns3ZmqBridge(
+            self.port, self.startSim, self.simSeed, self.simArgs, self.debug, self.src_dir)
         self.ns3ZmqBridge.initialize_env(self.stepTime)
         self.action_space = self.ns3ZmqBridge.get_action_space()
         self.observation_space = self.ns3ZmqBridge.get_observation_space()
